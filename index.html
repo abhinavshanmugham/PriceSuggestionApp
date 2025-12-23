@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Property Price Suggestion</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family: 'Montserrat', sans-serif;
+    min-height:100vh;
+    background:
+      linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),
+      url("https://images.unsplash.com/photo-1568605114967-8130f3a36994");
+    background-size:cover;
+    background-position:center;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.hidden{display:none;}
+.card{
+    width:420px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(15px);
+    padding:30px 25px;
+    border-radius:20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    color:#fff;
+    transition: transform 0.3s ease;
+}
+.card:hover{transform: translateY(-5px);}
+h2{text-align:center;color:#fff;margin-bottom:20px;text-shadow: 1px 1px 5px rgba(0,0,0,0.6);}
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border-radius:10px;
+    border:none;
+    outline:none;
+    background: rgba(255,255,255,0.2);
+    color:#fff;
+    font-size:15px;
+}
+input::placeholder{ color: rgba(255,255,255,0.7); }
+button{
+    width:100%;
+    padding:14px;
+    margin-top:12px;
+    border:none;
+    border-radius:10px;
+    background: #28a745;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition: all 0.3s ease;
+}
+button:hover{background:#1e7e34;transform: translateY(-2px);}
+.question{margin-top:15px;font-weight:600;font-size:15px;}
+.yn{display:flex;justify-content:space-between;margin-top:8px;}
+.yn button{width:48%;background:#17a2b8;}
+.selected{background:#ffc107 !important;color:#000 !important;}
+.disabled{pointer-events:none;opacity:0.7;}
+.back{background:#6c757d;margin-top:15px;}
+.result{margin-top:15px;padding:15px;background: rgba(255,255,255,0.2);border-radius:8px;text-align:center;font-weight:bold;font-size:16px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="card" id="loginPage">
+<h2>Login</h2>
+<input placeholder="Email">
+<input type="password" placeholder="Password">
+<button onclick="goServices()">Login</button>
+</div>
+
+<!-- SERVICES -->
+<div class="card hidden" id="servicePage">
+<h2>Our Services</h2>
+<button onclick="openLand()">Land Price Suggestion</button>
+<button onclick="openHome()">Home Price Suggestion</button>
+<button class="back" onclick="backToLogin()">Back</button>
+</div>
+
+<!-- LAND LOCATION -->
+<div class="card hidden" id="landLocation">
+<h2>Land Location</h2>
+<button onclick="landCity()">City</button>
+<button onclick="landVillage()">Village</button>
+<button class="back" onclick="backToServices()">Back</button>
+</div>
+
+<!-- LAND QUESTIONS -->
+<div class="card hidden" id="landQ">
+<h2>Land Questions</h2>
+<div id="landQuestions"></div>
+<button onclick="calculateLand()">Suggest Price</button>
+<div class="result hidden" id="landResult"></div>
+<button class="back" onclick="backToLandLocation()">Back</button>
+</div>
+
+<!-- HOME LOCATION -->
+<div class="card hidden" id="homeLocation">
+<h2>Home Location</h2>
+<button onclick="homeCity()">City</button>
+<button onclick="homeVillage()">Village</button>
+<button class="back" onclick="backToServices()">Back</button>
+</div>
+
+<!-- HOME QUESTIONS -->
+<div class="card hidden" id="homeQ">
+<h2>Home Questions</h2>
+<input id="rooms" type="number" placeholder="Number of Rooms">
+<input id="sqft" type="number" placeholder="Square Feet">
+<div id="homeQuestions"></div>
+<button onclick="calculateHome()">Suggest Price</button>
+<div class="result hidden" id="homeResult"></div>
+<button class="back" onclick="backToHomeLocation()">Back</button>
+</div>
+
+<script>
+let landScore=0, homeScore=0;
+let landLocationType="";
+
+/* NAVIGATION */
+function goServices(){loginPage.classList.add("hidden");servicePage.classList.remove("hidden");}
+function backToLogin(){servicePage.classList.add("hidden");loginPage.classList.remove("hidden");}
+function backToServices(){landLocation.classList.add("hidden");homeLocation.classList.add("hidden");servicePage.classList.remove("hidden");}
+function openLand(){servicePage.classList.add("hidden");landLocation.classList.remove("hidden");}
+function openHome(){servicePage.classList.add("hidden");homeLocation.classList.remove("hidden");}
+function backToLandLocation(){landQ.classList.add("hidden");landLocation.classList.remove("hidden");landResult.classList.add("hidden");}
+function backToHomeLocation(){homeQ.classList.add("hidden");homeLocation.classList.remove("hidden");homeResult.classList.add("hidden");}
+
+/* UTIL */
+function ynQuestion(text,score,type){
+    return `<div class="question">${text}</div><div class="yn"><button onclick="answer(this,${score},'${type}')">Yes</button><button onclick="answer(this,0,'${type}')">No</button></div>`;
+}
+
+function answer(btn,val,type){
+    if(type==="home") homeScore+=val; else landScore+=val;
+    const buttons=btn.parentElement.querySelectorAll("button");
+    buttons.forEach(b=>b.classList.add("disabled"));
+    btn.classList.add("selected");
+}
+
+/* LAND */
+function landCity(){
+    landScore=0; landLocationType="prime";
+    landLocation.classList.add("hidden"); landQ.classList.remove("hidden"); landResult.classList.add("hidden");
+    landQuestions.innerHTML=
+      ynQuestion("Near main road?",1,"land")+
+      ynQuestion("Near IT / development?",2,"land")+
+      ynQuestion("Water facility?",1,"land")+
+      ynQuestion("EB facility?",1,"land")+
+      ynQuestion("Approved land?",2,"land")+
+      ynQuestion("Near school/hospital?",1,"land")+
+      ynQuestion("Commercial potential?",2,"land")+
+      ynQuestion("Good road access?",1,"land");
+}
+
+function landVillage(){
+    landScore=0; landLocationType="developing";
+    landLocation.classList.add("hidden"); landQ.classList.remove("hidden"); landResult.classList.add("hidden");
+    landQuestions.innerHTML=
+      ynQuestion("Near village road?",1,"land")+
+      ynQuestion("Future development nearby?",2,"land")+
+      ynQuestion("Water source available?",1,"land")+
+      ynQuestion("Farming suitable?",1,"land")+
+      ynQuestion("EB facility?",1,"land")+
+      ynQuestion("Approved land?",2,"land")+
+      ynQuestion("Near town?",1,"land")+
+      ynQuestion("Growth potential?",2,"land");
+}
+
+function calculateLand(){
+    let basePrice;
+    switch(landLocationType){
+        case "prime": basePrice=11; break;
+        case "developing": basePrice=8; break;
+        case "suburb": basePrice=6; break;
+        case "rural": basePrice=4; break;
+        default: basePrice=6;
+    }
+    let suggestedPrice = basePrice + (landScore * 0.5);
+    landResult.innerHTML = "Suggested Land Price: ₹ "+suggestedPrice.toFixed(2)+" Lakhs per cent";
+    landResult.classList.remove("hidden");
+}
+
+/* HOME */
+function homeCity(){
+    homeScore=0;
+    homeLocation.classList.add("hidden"); homeQ.classList.remove("hidden"); homeResult.classList.add("hidden");
+    homeQuestions.innerHTML=
+      ynQuestion("Water facility?",1,"home")+
+      ynQuestion("EB facility?",1,"home")+
+      ynQuestion("Parking available?",1,"home")+
+      ynQuestion("Near main road?",2,"home");
+}
+
+function homeVillage(){
+    homeScore=0;
+    homeLocation.classList.add("hidden"); homeQ.classList.remove("hidden"); homeResult.classList.add("hidden");
+    homeQuestions.innerHTML=
+      ynQuestion("Water facility?",1,"home")+
+      ynQuestion("EB facility?",1,"home")+
+      ynQuestion("Independent house?",1,"home")+
+      ynQuestion("Good road access?",1,"home")+
+      ynQuestion("House Type: RC?",2,"home");
+}
+
+function calculateHome(){
+    let sqftVal=Number(document.getElementById("sqft").value)||0;
+    let roomsVal=Number(document.getElementById("rooms").value)||0;
+    let isVillage=homeQuestions.innerHTML.includes("House Type");
+    let basePrice=isVillage?7:15;
+    let price=basePrice + (roomsVal*2) + (sqftVal*0.004) + homeScore;
+    document.getElementById("homeResult").innerHTML = "Estimated Home Price: ₹ "+price.toFixed(2)+" Lakhs";
+    document.getElementById("homeResult").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
